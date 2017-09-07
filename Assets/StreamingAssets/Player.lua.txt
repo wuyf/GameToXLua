@@ -1,0 +1,156 @@
+-- author:wuyongfei  PlayerInput  
+
+Player={}
+speed=1
+speed=1
+local  maxJumpHeight=8
+       minJumpHeight=1
+       timeToJumpApex=0.4
+local accelerationTimeAirborne=0.2
+local accelerationTimeGrounded=0.1
+local moveSpeed=6
+
+      wallJumpClimb=CS.UnityEngine.Vector2.zero
+      wallJumpOff=CS.UnityEngine.Vector2.zero
+      wallLeap=CS.UnityEngine.Vector2.zero
+
+      canDoubleJump=false
+local isDoubleJumping=false
+
+      wallSlideSpeedMax=0
+      wallStickTime=0
+local  timeToWallUnstick=0
+
+local gravity
+local minJumpVelocity
+local maxJumpVelocity
+local velocity=CS.UnityEngine.Vector2.zero
+local velocityXSmoothing
+
+local controller
+
+ directionalInput=CS.UnityEngine.Vector2.zero
+local wallSliding
+local wallDirX
+
+
+
+function Start()
+   -- print("====timeToWallUnstick========",timeToWallUnstick)
+	--print("=====self====",self)
+	local PrintTool=CS.MySpace.Tool.PrintTool()
+	--print("===PrintTool======",PrintTool)
+	local fileName="Player.txt"
+	local LoadLuaFile=CS.MySpace.Tool.LoadLuaFile(fileName)
+	--print("===LoadLuaFile======",LoadLuaFile)
+    controller=self:GetComponent("Controller2D")
+	--print("=====controller========",controller)
+	gravity=-(2*maxJumpHeight)/CS.UnityEngine.Mathf.Pow(timeToJumpApex,2)
+	--print("=====gravity=======",gravity)
+	maxJumpVelocity=CS.UnityEngine.Mathf.Abs(gravity)*timeToJumpApex
+	minJumpVelocity=CS.UnityEngine.Mathf.Sqrt(2*CS.UnityEngine.Mathf.Abs(gravity)*minJumpHeight)
+	--print("======minJumpVelocity====",minJumpVelocity)
+end
+
+function Update()
+    CalculateVelocity()
+	HandleWallSliding()
+	--print("=directionalInput==in player.lua.txt========",directionalInput)
+	controller:Move(velocity*CS.UnityEngine.Time.deltaTime,directionalInput)
+	--controller:Test()
+	if controller.collisions.above or controller.collisions.below then
+	  velocity.y=0
+	end
+end
+
+function SetDirectionalInput(input)
+   directionalInput=input
+end
+
+function OnJumpInputDown()
+  --print("====OnJumpInputDown===========")
+   if wallSliding then
+      if wallDirX == directionalInput.x then
+	    velocity.x=-wallDirX*wallJumpClimb.x
+		velocity.y=wallJumpClimb.y
+	  elseif  directionalInput.x==0 then
+	     velocity.x=-wallDirX*wallJumpOff.x
+	     velocity.y=wallJumpOff.y
+	  
+	  else
+	      velocity.x=-wallDirX*wallLerp.x 
+		  velocity.y=wallLeap.y
+	  end
+	  isDoubleJumping=false
+   end
+ 
+   if controller.collisions.below then
+      velocity.y=maxJumpVelocity
+	  isDoubleJumping=false
+   end
+    
+   if canDoubleJump and not controller.collisions.below and not isDoubleJumping and not wallSliding then
+      velocity.y=maxJumpVelocity
+	  isDoubleJumping=true
+   end
+     
+end
+
+function OnJumpInputUp()
+  
+   if velocity.y>minJumpVelocity then
+     
+     velocity.y=minJumpVelocity
+	   
+   end
+end
+
+function HandleWallSliding()
+   wallDirX=controller.collisions.left and -1 or  1
+   wallSliding=false
+   local flag=controller.collisions.left or controller.collisions.right
+   if flag and  not controller.collisions.below and velocity.y<0 then
+     wallSliding=true
+	 if velocity.y<(-wallSlideSpeedMax) then
+	    velocity.y=(-wallSlideSpeedMax)
+	 end
+	 if timeToWallUnstick > 0 then
+	    velocityXSmoothing=0
+		velocity.x=0
+		if directionalInput.x ~=wallDirX and directionalInput.x~=0 then
+		     timeToWallUnstick=timeToWallUnstick-CS.UnityEngine.Time.deltaTime
+		else
+             timeToWallUnstick=wallStickTime		
+		end
+	 else
+	       timeToWallUnstick=wallStickTime
+	 end
+   end
+end
+
+function CalculateVelocity()
+  --print("=====CalculateVelocity====")
+  targetVelocityX=directionalInput.x*moveSpeed
+  local value
+  if controller.collisions.below then
+    value=accelerationTimeGrounded
+  else
+     value=accelerationTimeAirborne
+  end
+  --velocity.x=CS.UnityEngine.Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, value 
+  --velocity.x=CS.UnityEngine.Mathf.SmoothDamp(velocity.x,targetVelocityX, ref velocityXSmoothing,value)
+   local result=CS.MySpace.Tool.Tool_SmoothDamp(velocity.x, targetVelocityX,  value)
+   velocityXSmoothing=result[0]
+   velocity.x=result[1]
+   velocity.y=velocity.y+gravity*CS.UnityEngine.Time.deltaTime
+end
+
+function SetDirectionalInput_X(x)
+ directionalInput.x=x
+ --print("=====Player.lua.txt==directionalInput===",directionalInput)
+end
+
+function SetDirectionalInput_Y(y)
+  directionalInput.y=y
+  --print("=====Player.lua.txt==directionalInput===",directionalInput)
+end

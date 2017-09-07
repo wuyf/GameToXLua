@@ -1,0 +1,28 @@
+-- author:wuyongfei  PlayerInput  
+--player={}
+speed=1
+function Start()
+    player=CS.UnityEngine.GameObject.Find('Player');
+	--print('===player= playerinput.lua.txt==',player)
+end
+
+function Update()
+  --拿到左右输入
+ local directionallInput=CS.UnityEngine.Vector2()
+ directionallInput.x=CS.UnityEngine.Input.GetAxisRaw('Horizontal')*speed
+ directionallInput.y=CS.UnityEngine.Input.GetAxisRaw('Vertical')*speed
+  -- print('===directionallInput==playerinput.lua.txt===',directionallInput)
+ 
+  player:GetComponent('Player'):SetDirectionalInput(directionallInput)
+ 
+ if CS.UnityEngine.Input.GetButtonDown('Jump') then
+     --print("==Input.GetButtonDown('Jump')=========")
+    player:GetComponent('Player'):OnJumpInputDown()
+ end
+ 
+ if CS.UnityEngine.Input.GetButtonUp('Jump') then
+   -- print("=====playinput.lua===GetButtonUp(Jump)====")
+    player:GetComponent('Player'):OnJumpInputUp()
+ end
+ 
+end

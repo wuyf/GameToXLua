@@ -1,0 +1,59 @@
+-- author:wuyongfei  PlayerInput  
+--player={}
+target={}
+verticalOffset=0
+lookAheadDesX=0
+lookSmoothTimeX=0
+verticalSmoothTime=0
+focusAreaSize=CS.UnityEngine.Vector2.zero
+
+local focusArea={}
+local currentLookAheadX=0
+local targetLookAheadX=0
+local lookAheadDirx=0
+local smoothLookVelocityX=0
+local smoothVelocityY=0
+local transform
+function Start()
+    print("=self.transfrom==",self:GetComponent("Transform"))
+	transform=self:GetComponent("Transform")
+    focusArea=CS.DataStruct.FocusArea(target.coll.bounds,focusAreaSize)
+	--print("====focusArea=======",focusArea)
+end
+
+function LateUpdate()
+   --print("====CameraFollow.lua.txt==LateUpdate==")
+   focusArea:Update(target.coll.bounds)
+   local focusPosition=focusArea.center+CS.UnityEngine.Vector2.up*verticalOffset
+   if focusArea.velocity.x ~= 0 then
+      lookAheadDirX=CS.UnityEngine.Mathf.Sign(focusArea.velocity.x)
+	   --print("===focusArea.velocity.x=======",focusArea.velocity.x,"=====target.playerInput.x====",target.playerInput.x)
+	  if CS.UnityEngine.Mathf.Sign(target.playerInput.x)==CS.UnityEngine.Mathf.Sign(focusArea.velocity.x) and target.playerInput.x ~= 0 then
+		 lookAheadStopped=false
+		 targetLookAheadX=lookAheadDirX*lookAheadDesX
+		 
+	  else
+	       if not lookAheadStopped then
+		     lookAheadStopped=true
+			 targetLookAheadX=currentLookAheadX+(lookAheadDirX*lookAheadDesX-currentLookAheadX)/4
+		   end
+	  end
+   end
+    local result=CS.MySpace.Tool.Tool_SmoothDamp(currentLookAheadX, targetLookAheadX,  lookSmoothTimeX)
+       smoothLookVelocityX=result[0]
+       currentLookAheadX=result[1]
+	   local result1=CS.MySpace.Tool.Tool_SmoothDamp(transform.position.y, focusPosition.y,  verticalSmoothTime)
+       smoothVelocityY=result1[0]
+       focusPosition.y=result1[1]
+	   local value={}
+	   value.x=focusPosition.x
+	   value.y=focusPosition.y
+	   value.z=0
+	   transform.position=value+CS.UnityEngine.Vector3.forward*-10
+	   --print("===transform.position========",transform.position)
+end
+
+function OnDrawGizmos()
+    CS.UnityEngine.Gizmos.color=CS.UnityEngine.Color(1,0,0,0.5)
+	CS.UnityEngine.Gizmos.DrawCube(focusArea.center,focusAreaSize)
+end

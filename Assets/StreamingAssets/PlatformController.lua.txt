@@ -1,0 +1,72 @@
+-- author:wuyongfei  PlayerInput  
+--RaycastController.cs 属性
+--需要压入的
+collisionMask={}
+skinWidth=0.015
+
+
+--本地属性
+local dstBetweenRays=0.25
+local horizontalRayCount
+local verticalRayCount
+local horizontalRaySpacing
+local verticalRaySpacing
+local coll={}
+local raycastOrigins
+
+--PlatformController.cs 属性
+passengerMask={}
+localWaypoints={}
+globalWaypoints={}
+speed=0
+cyclic=0
+waitTime=0
+easeAmount=0
+
+--PlatformController.cs 本地属性
+local fromWaypointIndex
+local percentBetweenWaypoints
+local nextMoveTime
+local passengerMovement={}
+local passengerDictionary={}
+local transform
+
+function Awake
+ coll=self:GetComponent("BoxCollider2D")
+ transform=self:GetComponent("Transform")
+end
+
+function Start()
+  CalculateRaySpacing()
+  for i=1,localWaypoints.Length do
+     globalWaypoints[i]=localWaypoints+transform.position
+  end
+end
+
+function CalculateRaySpacing()
+  local bounds=coll.bounds
+  bounds.Expand(skinWidth*-2)
+  local boundsWidth=bounds.size.x
+  local boundsHight=bounds.size.y
+  
+  horizontalRayCount=CS.UnityEngine.Mathf.RoundToInt(boundsHight/dstBetweenRays)
+  verticalRayCount=CS.UnityEngine.Mathf.RoundToInt(boundsWidth/dstBetweenRays)
+  
+  horizontalRaySpacing=bounds.size.y/(horizontalRayCount-1)
+  verticalRaySpacing=bounds.size.x/(verticalRayCount-1)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
